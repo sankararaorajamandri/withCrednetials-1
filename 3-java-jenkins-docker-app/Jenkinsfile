@@ -1,26 +1,51 @@
-//added githubhooks
-pipeline {
+pipeline{
     agent any
-    stages {
-        stage('Build') {
-            steps {
-                sh 'mvn clean package'
+        stages{
+            stage("Cloning Repo from GITHUB"){
+                steps{
+                    git branch: 'main', changelog: false, poll: false, url: 'https://github.com/sankararaorajamandri/withCrednetials-1.git'
+                }
             }
-        }
-        stage('Test') {
-            steps {
-                sh 'mvn test'
+            stage("Build"){
+                steps{
+                    dir('3-java-jenkins-docker-app') {
+                        sh ' mvn clean package'
+                    }
+                }
             }
-        }
-        stage('Docker Build') {
-            steps {
-                sh 'docker build -t java-jenkins-docker:latest .'
+            stage("Test"){
+                steps{
+                    dir('3-java-jenkins-docker-app'){
+                        sh 'mvn test'
+                    }
+                }
             }
-        }
-        stage('Docker Run') {
-            steps {
-                sh 'docker run --rm java-jenkins-docker:latest'
+            stage("Compile"){
+                steps{
+                    dir('3-java-jenkins-docker-app'){
+                        sh 'mvn compile'
+                    }
+                }
             }
-        }        
+            stage("RUNTIME"){
+                steps{
+                    sh 'java -jar ./3-java-jenkins-docker-app/target/java-jenkins-docker-1.0-SNAPSHOT.jar'
+                }
+            }
+            stage("Docker Image"){
+                steps{
+                    dir('3-java-jenkins-docker-app'){
+                       sh 'docker build -t java-jenkins-docker:latest .' 
+                    }
+                }
+            }
+            stage('Docker image Tag') {
+                steps {
+                    dir('3-java-jenkins-docker-app') {
+                    sh 'docker tag java-jenkins-docker:latest shankar2645/java-jenkins-docker:1.0'
+                    }
+                }
+            }
     }
+    
 }
